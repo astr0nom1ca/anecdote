@@ -1,5 +1,6 @@
 import { client } from "@/sanity/lib/client";
-import UpdateCard from "@/components/UpdateCard"; // We will build this next
+import UpdateCard from "@/components/UpdateCard";
+import CreateUpdate from "@/components/CreateUpdate";
 
 const FEED_QUERY = `*[_type == "update"] | order(_createdAt desc) {
   _id,
@@ -33,6 +34,8 @@ export default async function HomePage() {
   return (
     <main className="max-w-2xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8 text-purple-600">The Locker</h1>
+
+      <CreateUpdate />
       
       <div className="flex flex-col gap-6">
         {updates.map((update: any) => (
