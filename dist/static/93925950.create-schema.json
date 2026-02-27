@@ -1,0 +1,157 @@
+[
+  {
+    "fields": [
+      {
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "name": "author",
+        "type": "reference",
+        "title": "Post Author"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "max",
+                "constraint": 280
+              }
+            ],
+            "level": "error",
+            "message": "You gotta keep it short, sorry!"
+          }
+        ],
+        "name": "content",
+        "type": "text",
+        "title": "Status Text"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "image",
+        "type": "image",
+        "title": "Post Image"
+      },
+      {
+        "to": [
+          {
+            "type": "mood"
+          }
+        ],
+        "name": "feeling",
+        "type": "reference",
+        "title": "Current Feeling"
+      },
+      {
+        "of": [
+          {
+            "fields": [
+              {
+                "to": [
+                  {
+                    "type": "user"
+                  }
+                ],
+                "name": "user",
+                "type": "reference"
+              },
+              {
+                "to": [
+                  {
+                    "type": "mood"
+                  }
+                ],
+                "name": "emoji",
+                "type": "reference"
+              }
+            ],
+            "type": "object",
+            "name": "reaction"
+          }
+        ],
+        "name": "reactions",
+        "type": "array"
+      }
+    ],
+    "name": "update",
+    "type": "document",
+    "title": "Status Update"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "The word that follows \"Feeling:\" (e.g., Content, Iconic, Tragic)",
+        "name": "label",
+        "type": "string",
+        "title": "Feeling Text"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "The visual character (e.g., ✨, ☕, 🎭)",
+        "name": "emoji",
+        "type": "string"
+      },
+      {
+        "initialValue": "#7C4DFF",
+        "description": "Hex code for the UI accent (e.g., #E91E63 for Pink)",
+        "name": "color",
+        "type": "string",
+        "title": "Tag Color"
+      }
+    ],
+    "name": "mood",
+    "type": "document",
+    "title": "Mood Pool"
+  },
+  {
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "title": "Display Name"
+      },
+      {
+        "description": "The @username (e.g., torivega)",
+        "name": "username",
+        "type": "string",
+        "title": "Handle"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "avatar",
+        "type": "image",
+        "title": "Profile Picture"
+      }
+    ],
+    "name": "user",
+    "type": "document",
+    "title": "Users"
+  }
+]
