@@ -77,8 +77,8 @@ export default function CreateUpdate() {
 
   <div className="flex items-center justify-between mb-4">
     {/* Custom File Upload Button */}
-    <label className="cursor-pointer bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
-      <span>📷 Add Photo</span>
+    <label className="cursor-pointer bg-black-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition">
+      <span>Add Photo</span>
       <input 
         type="file" 
         className="hidden" 
@@ -110,7 +110,7 @@ export default function CreateUpdate() {
           disabled={isSubmitting}
           className="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
         >
-          {isSubmitting ? 'Posting...' : 'Post to The Locker'}
+          {isSubmitting ? 'Posting...' : 'Post'}
         </button>
       </form>
     </div>
