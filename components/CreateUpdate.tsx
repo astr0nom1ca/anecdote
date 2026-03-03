@@ -17,20 +17,40 @@ export default function CreateUpdate() {
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    setSelectedFile(file);
-    setPreview(URL.createObjectURL(file)); // Show a preview to the user
-  }
-};
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!content || !selectedMood) return alert("How are you feeling?");
+
+    // 1. Grab User ID from localStorage inside the handler to prevent SSR errors
+    const userId = localStorage.getItem('locker_user_id');
+
+    if (!userId) {
+      return alert("Wait! You need to Sign Up or Log In first.");
+    }
+    if (!content || !selectedMood) {
+      return alert("How are you feeling? (Please add text and a mood)");
+    }
 
     setIsSubmitting(true);
 
     try {
+      let imageAsset = null;
+
+      // 2. Upload image to Sanity if one is selected
+      if (selectedFile) {
+        imageAsset = await client.assets.upload('image', selectedFile, {
+          contentType: selectedFile.type,
+          filename: selectedFile.name,
+        });
+      }
+
+      // 3. Create the Update document
       await client.create({
         _type: 'update',
         content,
@@ -38,17 +58,32 @@ export default function CreateUpdate() {
           _type: 'reference',
           _ref: selectedMood,
         },
-        // We'll add image logic in a moment!
+        // Link the image if it exists
+        image: imageAsset ? {
+          _type: 'image',
+          asset: {
+            _type: "reference",
+            _ref: imageAsset._id,
+          },
+        } : undefined,
+        // Link to the actual logged-in user
         author: {
           _type: 'reference',
-          _ref: 'YOUR_USER_ID' // For now, hardcode a user ID from your Studio
+          _ref: userId,
         }
       });
-      
+
+      // 4. Reset form state
       setContent('');
-      window.location.reload(); // Simple way to refresh the feed
+      setSelectedFile(null);
+      setPreview(null);
+      setSelectedMood('');
+      
+      // Refresh to show the new post
+      window.location.reload(); 
     } catch (err) {
       console.error("Post failed:", err);
+      alert("Something went wrong while posting.");
     } finally {
       setIsSubmitting(false);
     }
@@ -65,29 +100,34 @@ export default function CreateUpdate() {
           onChange={(e) => setContent(e.target.value)}
         />
 
+        {/* Image Preview Area */}
         {preview && (
-  <div className="relative w-full aspect-video mb-4 overflow-hidden rounded-lg">
-    <img src={preview} className="w-full h-full object-cover" alt="Preview" />
-    <button 
-      onClick={() => {setSelectedFile(null); setPreview(null);}}
-      className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 w-8 h-8"
-    >✕</button>
-  </div>
-)}
+          <div className="relative w-full aspect-video mb-4 overflow-hidden rounded-lg bg-gray-100">
+            <img src={preview} className="w-full h-full object-cover" alt="Preview" />
+            <button 
+              type="button"
+              onClick={() => {setSelectedFile(null); setPreview(null);}}
+              className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center hover:bg-black/70"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
-  <div className="flex items-center justify-between mb-4">
-    {/* Custom File Upload Button */}
-    <label className="cursor-pointer bg-black-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition">
-      <span>Add Photo</span>
-      <input 
-        type="file" 
-        className="hidden" 
-        accept="image/*" 
-        onChange={handleFileChange} 
-      />
-    </label>
-    </div>
+        <div className="flex items-center justify-between mb-4">
+          {/* Custom File Upload Button */}
+          <label className="cursor-pointer bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition text-gray-700">
+            <span>📷 Add Photo</span>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+            />
+          </label>
+        </div>
 
+        {/* Mood Picker */}
         <div className="flex flex-wrap gap-2 my-4">
           {moods.map((mood) => (
             <button
@@ -108,9 +148,9 @@ export default function CreateUpdate() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
+          className="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition"
         >
-          {isSubmitting ? 'Posting...' : 'Post'}
+          {isSubmitting ? 'Posting to The Locker...' : 'Post'}
         </button>
       </form>
     </div>
