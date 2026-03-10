@@ -15,7 +15,7 @@ export default function UserHeader() {
         username, 
         displayName, 
         realName, 
-        avatar
+        avatar { asset-> }
       }`).then(setUser);
     }
   }, []);

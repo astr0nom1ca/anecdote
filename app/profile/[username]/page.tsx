@@ -12,13 +12,18 @@ const PROFILE_QUERY = `*[_type == "user" && username == $username][0] {
   username,
   realName,
   bio,
-  avatar,
+  avatar { asset-> }, // 1. Fix for the main Profile Header
   "posts": *[_type == "update" && author._ref == ^._id] | order(_createdAt desc) {
     _id,
     content,
     _createdAt,
     image { asset-> },
-    "author": author->{ username, displayName, realName, avatar },
+    "author": author->{ 
+      username, 
+      displayName, 
+      realName, 
+      avatar { asset-> } // 2. Fix for the avatar inside the Feed cards
+    },
     "feeling": feeling->{ label, emoji, color }
   }
 }`;
