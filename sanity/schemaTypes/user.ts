@@ -44,5 +44,15 @@ export default defineType({
       rows: 3,
       description: 'Tell the Locker a bit about yourself.',
     }),
+    defineField({
+      name: 'password',
+      type: 'string',
+      hidden: true, // Hides it from the Sanity Studio UI for safety
+    }),
+  defineField({
+    name: 'resetToken',
+    type: 'string',
+    hidden: true,
+  }),
   ],
 })
