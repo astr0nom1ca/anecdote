@@ -54,5 +54,15 @@ export default defineType({
     type: 'string',
     hidden: true,
   }),
+  defineField({
+  name: 'resetToken',
+  type: 'string',
+  hidden: true,
+}),
+defineField({
+  name: 'resetTokenExpiry',
+  type: 'datetime',
+  hidden: true,
+}),
   ],
 })

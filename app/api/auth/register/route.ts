@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     cookieStore.set('locker_session', token, {
       httpOnly: true, // Prevents JavaScript from stealing the token
-      secure: process.env.NODE_NODE === 'production',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/',
