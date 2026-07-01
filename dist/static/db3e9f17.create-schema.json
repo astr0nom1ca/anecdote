@@ -1,0 +1,207 @@
+[
+  {
+    "fields": [
+      {
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "name": "author",
+        "type": "reference",
+        "title": "Post Author"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "max",
+                "constraint": 280
+              }
+            ],
+            "level": "error",
+            "message": "You gotta keep it short, sorry!"
+          }
+        ],
+        "name": "content",
+        "type": "text",
+        "title": "Status Text"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "image",
+        "type": "image",
+        "title": "Post Image"
+      },
+      {
+        "to": [
+          {
+            "type": "mood"
+          }
+        ],
+        "name": "feeling",
+        "type": "reference",
+        "title": "Current Feeling"
+      },
+      {
+        "of": [
+          {
+            "fields": [
+              {
+                "to": [
+                  {
+                    "type": "user"
+                  }
+                ],
+                "name": "user",
+                "type": "reference"
+              },
+              {
+                "to": [
+                  {
+                    "type": "mood"
+                  }
+                ],
+                "name": "emoji",
+                "type": "reference"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "name": "reactions",
+        "type": "array"
+      }
+    ],
+    "name": "update",
+    "type": "document",
+    "title": "Status Update"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "The word that follows \"Feeling:\" (e.g., Content, Iconic, Tragic)",
+        "name": "label",
+        "type": "string",
+        "title": "Feeling Text"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "The visual character (e.g., ✨, ☕, 🎭)",
+        "name": "emoji",
+        "type": "string"
+      },
+      {
+        "initialValue": "#7C4DFF",
+        "description": "Hex code for the UI accent (e.g., #E91E63 for Pink)",
+        "name": "color",
+        "type": "string",
+        "title": "Tag Color"
+      }
+    ],
+    "name": "mood",
+    "type": "document",
+    "title": "Mood Pool"
+  },
+  {
+    "fields": [
+      {
+        "description": "The big bold name people see first (e.g., THE CHOSEN ONE).",
+        "name": "displayName",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "stringCasing",
+                "constraint": "lowercase"
+              },
+              {
+                "flag": "regex",
+                "constraint": {
+                  "pattern": "/^[a-zA-Z0-9_]+$/",
+                  "name": "username",
+                  "invert": false
+                }
+              }
+            ],
+            "level": "error",
+            "message": "Usernames can only contain letters, numbers, and underscores (no spaces)."
+          }
+        ],
+        "description": "Your unique ID. No spaces or caps (e.g., bighead300).",
+        "name": "username",
+        "type": "string",
+        "title": "Handle (@)"
+      },
+      {
+        "description": "The boring legal name (e.g., Joe Adams).",
+        "name": "realName",
+        "type": "string",
+        "title": "Real Human Name"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "avatar",
+        "type": "image",
+        "title": "Profile Picture"
+      },
+      {
+        "rows": 3,
+        "description": "Tell the Locker a bit about yourself.",
+        "name": "bio",
+        "type": "text"
+      },
+      {
+        "hidden": true,
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hidden": true,
+        "name": "resetToken",
+        "type": "string"
+      },
+      {
+        "hidden": true,
+        "name": "resetTokenExpiry",
+        "type": "datetime"
+      }
+    ],
+    "name": "user",
+    "type": "document",
+    "title": "Users"
+  }
+]

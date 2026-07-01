@@ -24,7 +24,7 @@ export default defineType({
       type: 'string',
       title: 'Tag Color',
       description: 'Hex code for the UI accent (e.g., #E91E63 for Pink)',
-      initialValue: '#7C4DFF', // Default purple "Victorious" color
+      initialValue: '#7C4DFF', // ✅ MOVED HERE: Initial values belong inside the specific field!
     }),
   ],
   // This makes the list view in Sanity look like the actual app
@@ -35,7 +35,8 @@ export default defineType({
     },
     prepare({ title, emoji }) {
       return {
-        title: `Feeling: ${title} ${emoji}`,
+        title: `Feeling: ${title}`,
+        media: emoji, // ✅ FIX: Passing the string directly to media renders the emoji as the document icon!
       }
     },
   },

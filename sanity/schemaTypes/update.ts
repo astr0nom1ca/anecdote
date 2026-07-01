@@ -36,7 +36,7 @@ export default defineType({
       of: [
         {
           type: 'object',
-          name: 'reaction',
+          //name: 'reaction',
           fields: [
             defineField({ name: 'user', type: 'reference', to: [{ type: 'user' }] }),
             defineField({ name: 'emoji', type: 'reference', to: [{ type: 'mood' }] }),
