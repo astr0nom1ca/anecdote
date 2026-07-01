@@ -74,6 +74,16 @@ export default function AuthPage() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
+            {/* Insert this right below your input container and right above the submit button */}
+            <div className="flex justify-end pr-1">
+              <button
+                type="button"
+                onClick={() => router.push('/signup/forgot')}
+                className="text-xs font-semibold text-purple-400 hover:text-purple-600 transition"
+              >
+                Forgot Password?
+              </button>
+            </div>
           </div>
 
           {isNewUser && (
