@@ -7,35 +7,47 @@ export async function POST(request: Request) {
   try {
     const { username, displayName, password, email } = await request.json();
 
-    // 1. Check if user already exists
+    // 1. Edge-case Sanitization (The Safety Net)
+    const cleanUsername = username.toLowerCase().trim();
+    const cleanEmail = email.toLowerCase().trim(); // 👈 Strips spaces and forces lowercase
+
+    // 2. Check if user already exists (Updated to use clean sanitized variables)
     const existingUser = await client.fetch(
       `*[_type == "user" && (username == $username || email == $email)][0]`,
-      { username, email }
+      { username: cleanUsername, email: cleanEmail }
     );
 
     if (existingUser) {
-      return NextResponse.json({ error: "Username or Email already taken" }, { status: 400 });
+      // 💡 Pro Skill: Tell the user exactly what went wrong instead of a generic guess
+      const isDuplicateEmail = existingUser.email === cleanEmail;
+      return NextResponse.json({ 
+        error: isDuplicateEmail ? "Email is already registered" : "Username is already taken" 
+      }, { status: 400 });
     }
 
-    // 2. Hash the password
+    // 3. Hash the password
     const hashedPassword = await hashPassword(password);
 
-    // 3. Create the user in Sanity
+    // 4. Create the user in Sanity
     const newUser = await client.create({
       _type: 'user',
-      username: username.toLowerCase(),
+      username: cleanUsername,
       displayName,
-      email,
-      password: hashedPassword, // Store the scrambled version!
+      email: cleanEmail, // 👈 Saves the pristine sanitized email string
+      password: hashedPassword,
     });
 
-    // 4. Create a Session Token (The ID Card)
-    const token = await createToken({ userId: newUser._id, username: newUser.username });
+    // 5. Create a Session Token (Passing the email down here too!)
+    const token = await createToken({ 
+      userId: newUser._id, 
+      username: newUser.username,
+      email: newUser.email // 👈 Match the new login payload structure!
+    });
 
-    // 5. Set a Secure Cookie
+    // 6. Set a Secure Cookie
     const cookieStore = await cookies();
     cookieStore.set('locker_session', token, {
-      httpOnly: true, // Prevents JavaScript from stealing the token
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -44,7 +56,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: "Account created!" }, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("Registration route error:", error);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

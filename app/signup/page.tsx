@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 
 export default function AuthPage() {
   const [username, setUsername] = useState('');
-  const [name, setName] = useState(''); // This will be the Real Name (e.g. Joe Adams)
+  const [email, setEmail] = useState(''); //  ADDED EMAIL STATE VARIABLE HERE
+  const [name, setName] = useState(''); 
   const [isNewUser, setIsNewUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,9 +17,10 @@ export default function AuthPage() {
     setLoading(true);
 
     const cleanUsername = username.toLowerCase().trim();
+    const cleanEmail = email.toLowerCase().trim(); // clean email data
 
     try {
-      // 1. Check if the username already exists
+      // Check if the username already exists
       const existingUser = await client.fetch(
         `*[_type == "user" && username == $username][0]`, 
         { username: cleanUsername }
@@ -34,12 +36,13 @@ export default function AuthPage() {
         setLoading(false);
         return; 
       } else {
-        // --- SIGNUP (Triple Identity Logic) ---
+        // --- SIGNUP ---
         const user = await client.create({
           _type: 'user',
-          username: cleanUsername,      // The ID (e.g. bighead300)
-          displayName: cleanUsername,   // The Wacky Name (Defaults to ID)
-          realName: name,               // The Legal Name (e.g. Joe Adams)
+          username: cleanUsername,      
+          email: cleanEmail,            //  SAVES THE EMAIL TO SANITY DB
+          displayName: cleanUsername,   
+          realName: name,               
         });
 
         localStorage.setItem('locker_user_id', user._id);
@@ -64,6 +67,8 @@ export default function AuthPage() {
         </p>
         
         <form onSubmit={handleAuth} className="space-y-4">
+          
+          {/* USERNAME INPUT (Visible during Login & Signup) */}
           <div className="relative">
             <span className="absolute left-3 top-3 text-purple-400 font-bold">@</span>
             <input 
@@ -74,7 +79,10 @@ export default function AuthPage() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-            {/* Insert this right below your input container and right above the submit button */}
+          </div>
+
+          {/* FORGOT PASSWORD LINK (Only shows up during Login state) */}
+          {!isNewUser && (
             <div className="flex justify-end pr-1">
               <button
                 type="button"
@@ -84,21 +92,36 @@ export default function AuthPage() {
                 Forgot Password?
               </button>
             </div>
-          </div>
+          )}
 
+          {/* SIGNUP EXTRA FIELDS (Animate open when it is a brand new account) */}
           {isNewUser && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-purple-500 mb-1 font-bold ml-1">Username available! Now, your real name:</p>
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-xs text-purple-500 font-bold ml-1">Username available! Provide details:</p>
+              
+              {/* EMAIL INPUT */}
+              <input 
+                type="email"
+                placeholder="your-email@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.toLowerCase().trim())} 
+                className="w-full p-3 border-2 border-purple-100 bg-purple-50/50 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
+                required
+              />
+
+              {/* REAL NAME INPUT */}
               <input 
                 type="text" 
                 placeholder="Real Name (e.g. Andre Harris)" 
-                className="w-full p-3 border-2 border-purple-100 bg-purple-50/50 rounded-xl focus:border-purple-500 outline-none text-black"
+                value={name}
+                className="w-full p-3 border-2 border-purple-100 bg-purple-50/50 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
           )}
 
+          {/* SUBMIT ACTION BUTTON */}
           <button 
             type="submit"
             disabled={loading}
@@ -109,12 +132,12 @@ export default function AuthPage() {
         </form>
 
         {isNewUser && (
-            <button 
-              onClick={() => setIsNewUser(false)} 
-              className="w-full mt-4 text-xs text-gray-400 hover:text-purple-600 transition"
-            >
-                Back to Login
-            </button>
+          <button 
+            onClick={() => setIsNewUser(false)} 
+            className="w-full mt-4 text-xs text-gray-400 hover:text-purple-600 transition"
+          >
+            Back to Login
+          </button>
         )}
       </div>
     </div>

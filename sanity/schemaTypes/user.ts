@@ -12,6 +12,13 @@ export default defineType({
       description: 'The big bold name people see first (e.g., THE CHOSEN ONE).',
     }),
     defineField({
+      name: 'email',
+      type: 'email', 
+      title: 'Email Address',
+      description: 'Used securely for account recovery and notifications.',
+      validation: (Rule) => Rule.required(), // Let Next.js handle the casing formatting
+    }),
+    defineField({
       name: 'username',
       type: 'string',
       title: 'Handle (@)',
