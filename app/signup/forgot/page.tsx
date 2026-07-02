@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react'; // 1. Imported Suspense
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function ForgotPasswordPage() {
+// 2. This sub-component safely consumes the dynamic search params inside the client execution context
+function ForgotForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
   // Detect if a reset token is present in the URL bar (?token=XYZ)
   const token = searchParams.get('token');
 
-  // Input & UI States matching your layout style
+  // Input & UI States
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
       
       setMessage('Password updated! Redirecting...');
       setTimeout(() => {
-        router.push('/signup'); // Direct back to your main Auth page
+        router.push('/signup'); 
       }, 2500);
     } catch (err: any) {
       setError(err.message || 'Reset failed.');
@@ -69,74 +70,89 @@ export default function ForgotPasswordPage() {
   };
 
   return (
+    <>
+      <p className="text-gray-500 text-center mb-8 font-medium">
+        {token ? "Create your new secure key" : "Recover your lost access token"}
+      </p>
+      
+      {token ? (
+        /* --- VIEW A: RESET PASSWORD --- */
+        <form onSubmit={handleResetPassword} className="space-y-4">
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <p className="text-xs text-purple-500 mb-1 font-bold ml-1">Type your new password:</p>
+            <input 
+              type="password" 
+              placeholder="New Password" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full p-3 border-2 border-purple-100 bg-purple-50/50 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 disabled:bg-gray-400"
+          >
+            {loading ? 'Processing...' : 'Update Password'}
+          </button>
+        </form>
+      ) : (
+        /* --- VIEW B: FORGOT PASSWORD REQUEST --- */
+        <form onSubmit={handleRequestLink} className="space-y-4">
+          <div>
+            <input 
+              type="email" 
+              placeholder="Account Email (e.g. joe@gmail.com)" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
+              required
+            />
+          </div>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 disabled:bg-gray-400"
+          >
+            {loading ? 'Processing...' : 'Send Recovery Link'}
+          </button>
+        </form>
+      )}
+
+      {/* Unified Feedback Microcopy */}
+      {message && (
+        <div className="mt-4 p-3 bg-purple-50 border border-purple-200 text-purple-700 rounded-xl text-xs font-bold text-center animate-in fade-in">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold text-center animate-in fade-in">
+          {error}
+        </div>
+      )}
+    </>
+  );
+}
+
+// 3. The main page shell wraps everything safely so `next build` passes smoothly
+export default function ForgotPasswordPage() {
+  const router = useRouter();
+
+  return (
     <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
       <div className="max-w-sm w-full bg-white p-8 rounded-2xl shadow-xl border-2 border-purple-200">
         <h1 className="text-3xl font-black text-purple-600 mb-2 text-center uppercase tracking-tighter italic">
           The Locker
         </h1>
-        <p className="text-gray-500 text-center mb-8 font-medium">
-          {token ? "Create your new secure key" : "Recover your lost access token"}
-        </p>
         
-        {token ? (
-          /* --- VIEW A: RESET PASSWORD --- */
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-purple-500 mb-1 font-bold ml-1">Type your new password:</p>
-              <input 
-                type="password" 
-                placeholder="New Password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-3 border-2 border-purple-100 bg-purple-50/50 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
-                required
-                minLength={6}
-              />
-            </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 disabled:bg-gray-400"
-            >
-              {loading ? 'Processing...' : 'Update Password'}
-            </button>
-          </form>
-        ) : (
-          /* --- VIEW B: FORGOT PASSWORD REQUEST --- */
-          <form onSubmit={handleRequestLink} className="space-y-4">
-            <div>
-              <input 
-                type="email" 
-                placeholder="Account Email (e.g. joe@gmail.com)" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
-                required
-              />
-            </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 disabled:bg-gray-400"
-            >
-              {loading ? 'Processing...' : 'Send Recovery Link'}
-            </button>
-          </form>
-        )}
-
-        {/* Unified Feedback Microcopy matching the design style */}
-        {message && (
-          <div className="mt-4 p-3 bg-purple-50 border border-purple-200 text-purple-700 rounded-xl text-xs font-bold text-center animate-in fade-in">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold text-center animate-in fade-in">
-            {error}
-          </div>
-        )}
+        {/* The boundary that intercepts static pre-rendering panics */}
+        <Suspense fallback={<div className="text-center text-sm text-gray-400 py-4 font-medium">Loading security key verification...</div>}>
+          <ForgotForm />
+        </Suspense>
 
         <button 
           onClick={() => router.push('/signup')} 
