@@ -56,11 +56,11 @@ export default function AuthPage() {
     }
   };
 
-  return (
+return (
     <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
       <div className="max-w-sm w-full bg-white p-8 rounded-2xl shadow-xl border-2 border-purple-200">
         <h1 className="text-3xl font-black text-purple-600 mb-2 text-center uppercase tracking-tighter italic">
-          The Locker
+          anecdote
         </h1>
         <p className="text-gray-500 text-center mb-8 font-medium">
           {isNewUser ? "Finish creating your account" : "Sign in with your username"}
@@ -131,14 +131,31 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {isNewUser && (
-          <button 
-            onClick={() => setIsNewUser(false)} 
-            className="w-full mt-4 text-xs text-gray-400 hover:text-purple-600 transition"
-          >
-            Back to Login
-          </button>
-        )}
+        {/* 🌟 DYNAMIC UTILITY TOGGLE FOOTER */}
+        <div className="mt-6 text-center">
+          {isNewUser ? (
+            <p className="text-xs text-gray-400 font-medium">
+              Already have a secure key?{' '}
+              <button 
+                onClick={() => setIsNewUser(false)} 
+                className="font-bold text-purple-500 hover:text-purple-700 transition underline decoration-2 underline-offset-2"
+              >
+                Log In
+              </button>
+            </p>
+          ) : (
+            <p className="text-xs text-gray-400 font-medium">
+              New around here?{' '}
+              <button 
+                onClick={() => setIsNewUser(true)} 
+                className="font-bold text-purple-500 hover:text-purple-700 transition underline decoration-2 underline-offset-2"
+              >
+                Create an Account
+              </button>
+            </p>
+          )}
+        </div>
+
       </div>
     </div>
   );
