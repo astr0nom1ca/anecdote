@@ -8,27 +8,35 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    // 1. Fetch the user (Added 'email' to the GROQ projection)
+    if (!username || !password) {
+      return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+    }
+
+    // 1. Fetch the user (Supporting both 'password' and 'passwordHash' naming formats)
     const user = await client.fetch(
       `*[_type == "user" && username == $username][0]{
         _id,
         username,
-        email,       // 👈 Fetching email from Sanity
-        password
+        email,
+        password,
+        passwordHash
       }`,
       { username: username.toLowerCase().trim() }
     );
 
-    // 2. Check if user exists and password is correct
-    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+    // Identify which field holds your hashed password
+    const storedHash = user?.passwordHash || user?.password;
+
+    // 2. Check if user exists and password matches
+    if (!user || !storedHash || !(await bcrypt.compare(password, storedHash))) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
 
-    // 3. Create Session Token (Including email in the session token payload)
+    // 3. Create Session Token (Now securely including email!)
     const token = await createToken({ 
       userId: user._id, 
       username: user.username,
-      email: user.email // 👈 Now your session token securely knows their email!
+      email: user.email
     });
 
     // 4. Set Secure Cookie
@@ -41,7 +49,12 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    return NextResponse.json({ message: "Welcome back!" }, { status: 200 });
+    // Return the userId to the frontend so it can save to localStorage
+    return NextResponse.json({ 
+      message: "Welcome back!",
+      userId: user._id 
+    }, { status: 200 });
+
   } catch (error) {
     console.error("Login route error:", error);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
