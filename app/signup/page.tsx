@@ -41,7 +41,7 @@ export default function AuthPage() {
 
         } else {
           // --- 2. SIGNUP FLOW (Talks to your register API route) ---
-          const response = await fetch('/api/register', { // 👈 Make sure this matches your actual API path (e.g., /api/register)
+          const response = await fetch('/api/auth/register', { // 👈 Make sure this matches your actual API path (e.g., /api/register)
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
