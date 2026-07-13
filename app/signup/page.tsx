@@ -13,48 +13,64 @@ export default function AuthPage() {
   const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
+      e.preventDefault();
+      setLoading(true);
 
-    const cleanUsername = username.toLowerCase().trim();
-    const cleanEmail = email.toLowerCase().trim(); // clean email data
+      const cleanUsername = username.toLowerCase().trim();
+      const cleanEmail = email.toLowerCase().trim();
 
-    try {
-      // Check if the username already exists
-      const existingUser = await client.fetch(
-        `*[_type == "user" && username == $username][0]`, 
-        { username: cleanUsername }
-      );
+      try {
+        if (!isNewUser) {
+          // --- 1. LOGIN FLOW ---
+          // First check if user exists in Sanity
+          const existingUser = await client.fetch(
+            `*[_type == "user" && username == $username][0]`, 
+            { username: cleanUsername }
+          );
 
-      if (existingUser) {
-        // --- LOGIN ---
-        localStorage.setItem('locker_user_id', existingUser._id);
-        router.push('/');
-      } else if (!isNewUser) {
-        // --- PROMPT SIGNUP ---
-        setIsNewUser(true);
+          if (!existingUser) {
+            // If user doesn't exist, automatically prompt them to sign up
+            setIsNewUser(true);
+            setLoading(false);
+            return;
+          }
+
+          // Save local session tracker & redirect
+          localStorage.setItem('locker_user_id', existingUser._id);
+          router.push('/');
+
+        } else {
+          // --- 2. SIGNUP FLOW (Talks to your register API route) ---
+          const response = await fetch('/api/register', { // 👈 Make sure this matches your actual API path (e.g., /api/register)
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: cleanUsername,
+              displayName: name || cleanUsername, // Maps "realName" state to the route's expected "displayName"
+              email: cleanEmail,
+              password: "temporary-secure-password" // ⚠️ Add a password field to your form later, or pass a placeholder for now
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Registration failed");
+          }
+
+          // Success! Set local storage identifier and redirect
+          // (The secure HTTP-only cookie was already set by the server response!)
+          router.push('/');
+        }
+      } catch (err: any) {
+        console.error(err);
+        alert(err.message || "Something went wrong. Check your connection!");
+      } finally {
         setLoading(false);
-        return; 
-      } else {
-        // --- SIGNUP ---
-        const user = await client.create({
-          _type: 'user',
-          username: cleanUsername,      
-          email: cleanEmail,            //  SAVES THE EMAIL TO SANITY DB
-          displayName: cleanUsername,   
-          realName: name,               
-        });
-
-        localStorage.setItem('locker_user_id', user._id);
-        router.push('/');
       }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Check your connection!");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
 return (
     <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
