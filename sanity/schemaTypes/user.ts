@@ -53,8 +53,10 @@ export default defineType({
     }),
     defineField({
       name: 'password',
+      title: 'Hashed Password',
       type: 'string',
-      hidden: true, // Hides it from the Sanity Studio UI for safety
+      readOnly: true, //  Prevents admins from accidentally changing/deleting hashes by hand
+      hidden: false,  // Set to true if you don't want it visible in the Studio UI
     }),
   defineField({
     name: 'resetToken',
