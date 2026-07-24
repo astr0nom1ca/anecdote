@@ -7,7 +7,8 @@ export default function AuthPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState(''); 
   const [name, setName] = useState(''); 
-  const [password, setPassword] = useState(''); // 👈 NEW: Added password state
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -22,26 +23,24 @@ export default function AuthPage() {
     try {
       if (!isNewUser) {
         // --- 1. LOGIN FLOW ---
-        // First check if the user exists in Sanity
-      // Inside signup/page.tsx -> handleAuth() -> "login" block:
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: cleanUsername,
-          password: password,
-        }),
-      });
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: cleanUsername,
+            password: password,
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
+        if (!response.ok) {
+          throw new Error(data.error || "Login failed");
+        }
 
-      // Store the user ID and redirect home!
-      localStorage.setItem('locker_user_id', data.userId);
-      router.push('/');
+        // Store the user ID and redirect home
+        localStorage.setItem('locker_user_id', data.userId);
+        router.push('/');
 
       } else {
         // --- 2. SIGNUP FLOW ---
@@ -54,7 +53,7 @@ export default function AuthPage() {
             username: cleanUsername,
             displayName: name || cleanUsername, 
             email: cleanEmail,
-            password: password // 👈 NEW: Sends the actual chosen password to register/route.ts!
+            password: password
           }),
         });
 
@@ -99,16 +98,37 @@ export default function AuthPage() {
             />
           </div>
 
-          {/* PASSWORD INPUT (Required for both Login & Signup for basic security!) */}
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            className="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6} // Basic client-side validation
-          />
+          {/* PASSWORD INPUT WITH SHOW/HIDE TOGGLE */}
+          <div className="relative w-full">
+            <input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="Password" 
+              value={password}
+              className="w-full p-3 pr-10 border-2 border-gray-100 rounded-xl focus:border-purple-500 outline-none text-black font-medium"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                /* Eye-off icon */
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                /* Eye icon */
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12c1.341-4.524 5.362-7.5 9.964-7.5s8.623 2.976 9.964 7.5s-8.623-2.976-9.964-7.5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
 
           {/* FORGOT PASSWORD LINK */}
           {!isNewUser && (
@@ -166,9 +186,10 @@ export default function AuthPage() {
             <p className="text-xs text-gray-400 font-medium">
               Already have a secure key?{' '}
               <button 
+                type="button"
                 onClick={() => {
                   setIsNewUser(false);
-                  setPassword(''); // Clear password when swapping states
+                  setPassword('');
                 }} 
                 className="font-bold text-purple-500 hover:text-purple-700 transition underline decoration-2 underline-offset-2"
               >
@@ -179,6 +200,7 @@ export default function AuthPage() {
             <p className="text-xs text-gray-400 font-medium">
               New around here?{' '}
               <button 
+                type="button"
                 onClick={() => {
                   setIsNewUser(true);
                   setPassword('');
