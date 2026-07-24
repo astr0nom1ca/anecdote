@@ -3,7 +3,31 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function AuthPage() {
+// password strength evaluator
+const getPasswordStrength = (pass: string) => {
+  let score = 0;
+  if (!pass) return { score: 0, label: '', color: 'bg-gray-200' };
+
+  if (pass.length >= 6) score++;
+  if (pass.length >= 10) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+  switch (score) {
+    case 1:
+      return { score, label: 'Weak', color: 'bg-red-500' };
+    case 2:
+      return { score, label: 'Fair', color: 'bg-orange-500' };
+    case 3:
+      return { score, label: 'Good', color: 'bg-yellow-500' };
+    case 4:
+      return { score, label: 'Strong', color: 'bg-emerald-500' };
+    default:
+      return { score: 0, label: 'Too short', color: 'bg-gray-300' };
+  }
+};
+
+export default function AuthPage() {  
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState(''); 
   const [name, setName] = useState(''); 
@@ -12,6 +36,7 @@ export default function AuthPage() {
   const [isNewUser, setIsNewUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const strength = getPasswordStrength(password);
 
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -212,6 +237,34 @@ export default function AuthPage() {
             </p>
           )}
         </div>
+
+        {/* PASSWORD STRENGTH METER (Shows only during signup) */}
+    {isNewUser && password.length > 0 && (
+      <div className="space-y-1 mt-1 px-1 transition-all">
+        <div className="flex justify-between items-center text-xs font-semibold">
+          <span className="text-gray-400">Password strength:</span>
+          <span className={
+            strength.score === 1 ? 'text-red-500' :
+            strength.score === 2 ? 'text-orange-500' :
+            strength.score === 3 ? 'text-yellow-600' : 'text-emerald-600'
+          }>
+            {strength.label}
+          </span>
+        </div>
+        
+        {/* 4-Segment Progress Bar */}
+        <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+          {[1, 2, 3, 4].map((step) => (
+            <div
+              key={step}
+              className={`h-full rounded-full transition-all duration-300 ${
+                step <= strength.score ? strength.color : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    )}
 
       </div>
     </div>
