@@ -101,10 +101,10 @@ export default function UpdateCard({ update }: { update: any }) {
 
       {/* Attached Image */}
       {image && (
-        <div className="rounded-xl overflow-hidden border border-gray-100 shadow-inner max-w-md">
+        <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center max-h-72">
           <img 
-            src={urlFor(image).width(600).url()} 
-            className="w-full max-h-64 object-cover"
+            src={urlFor(image).width(800).url()} 
+            className="w-full max-h-72 object-contain"
             alt="Post attachment"
           />
         </div>
