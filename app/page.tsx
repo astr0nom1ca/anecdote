@@ -13,13 +13,13 @@ const FEED_QUERY = `*[_type == "update"] | order(_createdAt desc) {
     hotspot,
     crop
   },
-"author": author->{
-  _id,
-  username,
-  displayName,
-  realName,
-  avatar { asset-> }
-},
+  "author": {
+    "_id": author->_id,
+    "username": coalesce(author->username, "deleted_user"),
+    "displayName": coalesce(author->displayName, author->realName, "[Deleted User]"),
+    "realName": author->realName,
+    "avatar": author->avatar { asset-> }
+  },
   "feeling": feeling->{
     label,
     emoji,

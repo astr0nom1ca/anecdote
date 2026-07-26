@@ -10,6 +10,7 @@ export default defineType({
       type: 'reference',
       to: [{ type: 'user' }],
       title: 'Post Author',
+      weak: true,
     }),
     defineField({
       name: 'content',
