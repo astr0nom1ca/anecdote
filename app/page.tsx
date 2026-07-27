@@ -34,7 +34,7 @@ export default async function HomePage() {
     <AuthGuard>
       <main className="max-w-2xl mx-auto p-4">
         <h1 className="text-3xl font-bold mb-8 text-purple-600 uppercase italic tracking-tighter">
-          The Locker
+          Anecdote
         </h1>
         <UserHeader />
 
