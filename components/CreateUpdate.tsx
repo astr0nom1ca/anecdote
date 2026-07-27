@@ -11,7 +11,6 @@ export default function CreateUpdate() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // Fetch moods so the user can pick one
   useEffect(() => {
     client.fetch(`*[_type == "mood"]{_id, label, emoji}`).then(setMoods);
   }, []);
@@ -27,7 +26,6 @@ export default function CreateUpdate() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // 1. Grab User ID from localStorage inside the handler to prevent SSR errors
     const userId = localStorage.getItem('locker_user_id');
 
     if (!userId) {
@@ -40,50 +38,37 @@ export default function CreateUpdate() {
     setIsSubmitting(true);
 
     try {
-      let imageAsset = null;
-
-      // 2. Upload image to Sanity if one is selected
+      // Build FormData payload
+      const formData = new FormData();
+      formData.append('content', content);
+      formData.append('moodId', selectedMood);
+      formData.append('userId', userId);
       if (selectedFile) {
-        imageAsset = await client.assets.upload('image', selectedFile, {
-          contentType: selectedFile.type,
-          filename: selectedFile.name,
-        });
+        formData.append('file', selectedFile);
       }
 
-      // 3. Create the Update document
-      await client.create({
-        _type: 'update',
-        content,
-        feeling: {
-          _type: 'reference',
-          _ref: selectedMood,
-        },
-        // Link the image if it exists
-        image: imageAsset ? {
-          _type: 'image',
-          asset: {
-            _type: "reference",
-            _ref: imageAsset._id,
-          },
-        } : undefined,
-        // Link to the actual logged-in user
-        author: {
-          _type: 'reference',
-          _ref: userId,
-        }
+      // Call our secure server API route
+      const res = await fetch('/api/posts/create', {
+        method: 'POST',
+        body: formData,
       });
 
-      // 4. Reset form state
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to post update');
+      }
+
+      // Reset state
       setContent('');
       setSelectedFile(null);
       setPreview(null);
       setSelectedMood('');
       
-      // Refresh to show the new post
       window.location.reload(); 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Post failed:", err);
-      alert("Something went wrong while posting.");
+      alert(err.message || "Something went wrong while posting.");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +85,6 @@ export default function CreateUpdate() {
           onChange={(e) => setContent(e.target.value)}
         />
 
-        {/* Image Preview Area */}
         {preview && (
           <div className="relative w-full aspect-video mb-4 overflow-hidden rounded-lg bg-gray-100">
             <img src={preview} className="w-full h-full object-cover" alt="Preview" />
@@ -115,7 +99,6 @@ export default function CreateUpdate() {
         )}
 
         <div className="flex items-center justify-between mb-4">
-          {/* Custom File Upload Button */}
           <label className="cursor-pointer bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition text-gray-700">
             <span>📷 Add Photo</span>
             <input 
@@ -127,7 +110,6 @@ export default function CreateUpdate() {
           </label>
         </div>
 
-        {/* Mood Picker */}
         <div className="flex flex-wrap gap-2 my-4">
           {moods.map((mood) => (
             <button
