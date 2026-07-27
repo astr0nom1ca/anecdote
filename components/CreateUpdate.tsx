@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { client } from '@/sanity/lib/client';
+import { useRouter } from 'next/navigation';
 
 export default function CreateUpdate() {
   const [content, setContent] = useState('');
@@ -10,6 +11,8 @@ export default function CreateUpdate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const router = useRouter();
+
 
   useEffect(() => {
     client.fetch(`*[_type == "mood"]{_id, label, emoji}`).then(setMoods);
@@ -25,6 +28,7 @@ export default function CreateUpdate() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    router.refresh();
 
     const userId = localStorage.getItem('locker_user_id');
 
