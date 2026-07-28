@@ -1,11 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { client } from '@/sanity/lib/client';
 import { useRouter } from 'next/navigation';
 
-export default function EditProfileModal({ user, onOpenChange }: { user: any, onOpenChange: (open: boolean) => void }) {
-  const [displayName, setDisplayName] = useState(user.displayName);
+export default function EditProfileModal({
+  user,
+  onOpenChange,
+}: {
+  user: any;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [displayName, setDisplayName] = useState(user.displayName || '');
   const [bio, setBio] = useState(user.bio || '');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -16,35 +21,38 @@ export default function EditProfileModal({ user, onOpenChange }: { user: any, on
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-      setPreview(URL.createObjectURL(file)); // Create a temporary local URL for preview
+      setPreview(URL.createObjectURL(file));
     }
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      let imageAsset = user.avatar; // Keep old image by default
+      const formData = new FormData();
+      formData.append('userId', user._id);
+      formData.append('displayName', displayName);
+      formData.append('bio', bio);
 
-      // 1. If a new image was selected, upload it to Sanity
       if (imageFile) {
-        const asset = await client.assets.upload('image', imageFile);
-        imageAsset = {
-          _type: 'image',
-          asset: { _ref: asset._id, _type: 'reference' }
-        };
+        formData.append('image', imageFile);
       }
 
-      // 2. Patch the user document
-      await client
-        .patch(user._id)
-        .set({ displayName, bio, avatar: imageAsset })
-        .commit();
-      
-      router.refresh(); 
-      onOpenChange(false); 
-    } catch (err) {
+      const res = await fetch('/api/user/update', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update profile');
+      }
+
+      router.refresh();
+      onOpenChange(false);
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to update profile!");
+      alert(err.message || 'Failed to update profile!');
     } finally {
       setLoading(false);
     }
@@ -53,12 +61,14 @@ export default function EditProfileModal({ user, onOpenChange }: { user: any, on
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
-        <h2 className="text-2xl font-black text-purple-600 uppercase italic mb-6">Customize Your Locker</h2>
-        
+        <h2 className="text-2xl font-black text-purple-600 uppercase italic mb-6">
+          Customize Your Locker
+        </h2>
+
         <div className="space-y-4">
           {/* Image Upload Section */}
           <div className="flex flex-col items-center mb-4">
-            <div className="w-20 h-20 bg-purple-100 rounded-full mb-3 overflow-hidden border-2 border-purple-500">
+            <div className="w-20 h-20 bg-purple-100 rounded-full mb-3 overflow-hidden border-2 border-purple-500 flex items-center justify-center">
               {preview ? (
                 <img src={preview} className="w-full h-full object-cover" alt="Preview" />
               ) : (
@@ -74,9 +84,11 @@ export default function EditProfileModal({ user, onOpenChange }: { user: any, on
           </div>
 
           <div>
-            <label className="text-xs font-black uppercase text-gray-400 ml-1">Wacky Display Name</label>
-            <input 
-              type="text" 
+            <label className="text-xs font-black uppercase text-gray-400 ml-1">
+              Wacky Display Name
+            </label>
+            <input
+              type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full p-3 bg-purple-50 border-2 border-purple-100 rounded-xl focus:border-purple-500 outline-none text-black font-bold"
@@ -84,8 +96,10 @@ export default function EditProfileModal({ user, onOpenChange }: { user: any, on
           </div>
 
           <div>
-            <label className="text-xs font-black uppercase text-gray-400 ml-1">Your Bio</label>
-            <textarea 
+            <label className="text-xs font-black uppercase text-gray-400 ml-1">
+              Your Bio
+            </label>
+            <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
@@ -95,18 +109,20 @@ export default function EditProfileModal({ user, onOpenChange }: { user: any, on
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button 
+            <button
+              type="button"
               onClick={() => onOpenChange(false)}
               className="flex-1 py-3 font-bold text-gray-400 hover:text-gray-600 transition"
             >
               Cancel
             </button>
-            <button 
+            <button
+              type="button"
               onClick={handleSave}
               disabled={loading}
               className="flex-1 bg-purple-600 text-white font-black py-3 rounded-xl hover:bg-purple-700 transition disabled:bg-gray-300"
             >
-              {loading ? 'Uploading...' : 'Save Changes'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
