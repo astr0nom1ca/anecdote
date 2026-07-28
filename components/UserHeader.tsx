@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { client } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
 import Link from 'next/link';
@@ -8,21 +8,43 @@ import Link from 'next/link';
 export default function UserHeader() {
   const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
+  // Wrap the fetch logic in useCallback so we can call it anytime
+  const fetchUserData = useCallback(() => {
     const userId = localStorage.getItem('locker_user_id');
     if (userId) {
-      client.fetch(`*[_id == "${userId}"][0]{
-        username, 
-        displayName, 
-        realName, 
-        avatar { asset-> }
-      }`).then(setUser);
+      // Adding perspective: 'published' or querying directly with no CDN ensures fresh data
+      client
+        .fetch(
+          `*[_id == $userId][0]{
+            username, 
+            displayName, 
+            realName, 
+            avatar { asset-> }
+          }`,
+          { userId }
+        )
+        .then(setUser)
+        .catch(console.error);
     }
   }, []);
 
+  useEffect(() => {
+    fetchUserData();
+
+    // Listen for custom profile update events dispatched from EditProfileModal
+    const handleProfileUpdate = () => {
+      fetchUserData();
+    };
+
+    window.addEventListener('locker_profile_updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('locker_profile_updated', handleProfileUpdate);
+    };
+  }, [fetchUserData]);
+
   const handleLogout = () => {
     localStorage.removeItem('locker_user_id');
-    window.location.reload(); 
+    window.location.reload();
   };
 
   if (!user) return null;
@@ -30,14 +52,14 @@ export default function UserHeader() {
   return (
     <div className="flex items-center justify-between bg-white p-4 rounded-xl border mb-6 shadow-sm border-purple-100">
       {/* Clicking anywhere in this section now takes you to your profile */}
-      <Link 
-        href={`/profile/${user.username}`} 
+      <Link
+        href={`/profile/${user.username}`}
         className="flex items-center gap-3 hover:opacity-80 transition group"
       >
         {/* Avatar */}
         {user.avatar ? (
-          <img 
-            src={urlFor(user.avatar).width(100).height(100).url()} 
+          <img
+            src={urlFor(user.avatar).width(100).height(100).url()}
             className="w-12 h-12 rounded-full object-cover border-2 border-purple-500 shadow-sm"
             alt={user.displayName || user.username}
           />
@@ -50,9 +72,9 @@ export default function UserHeader() {
         {/* Identity Info */}
         <div className="flex flex-col">
           <span className="font-black text-black text-lg leading-tight group-hover:text-purple-600 transition-colors">
-            {user.displayName || user.username} 
+            {user.displayName || user.username}
           </span>
-          
+
           <div className="flex items-center gap-2 text-xs font-medium">
             <span className="text-purple-500 italic">@{user.username}</span>
             {user.realName && (
@@ -64,7 +86,7 @@ export default function UserHeader() {
         </div>
       </Link>
 
-      <button 
+      <button
         onClick={handleLogout}
         className="text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg transition-all uppercase tracking-widest"
       >

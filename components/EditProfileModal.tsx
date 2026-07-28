@@ -25,7 +25,7 @@ export default function EditProfileModal({
     }
   };
 
-  const handleSave = async () => {
+const handleSave = async () => {
     setLoading(true);
     try {
       const formData = new FormData();
@@ -48,7 +48,13 @@ export default function EditProfileModal({
         throw new Error(data.error || 'Failed to update profile');
       }
 
+      // 1. Notify UserHeader and any other listening components to refetch
+      window.dispatchEvent(new Event('locker_profile_updated'));
+
+      // 2. Refresh current Next.js route components
       router.refresh();
+
+      // 3. Close modal
       onOpenChange(false);
     } catch (err: any) {
       console.error(err);
