@@ -7,12 +7,12 @@ import Link from 'next/link';
 
 export default function UserHeader() {
   const [user, setUser] = useState<any>(null);
+  const [updatedAt, setUpdatedAt] = useState<number>(Date.now());
 
-  // Wrap the fetch logic in useCallback so we can call it anytime
   const fetchUserData = useCallback(() => {
     const userId = localStorage.getItem('locker_user_id');
     if (userId) {
-      // Adding perspective: 'published' or querying directly with no CDN ensures fresh data
+      // { useCdn: false } forces Sanity to fetch live data from the origin store
       client
         .fetch(
           `*[_id == $userId][0]{
@@ -21,9 +21,13 @@ export default function UserHeader() {
             realName, 
             avatar { asset-> }
           }`,
-          { userId }
+          { userId },
+          { useCdn: false, cache: 'no-store' } // 👈 Bypasses Sanity CDN cache
         )
-        .then(setUser)
+        .then((data) => {
+          setUser(data);
+          setUpdatedAt(Date.now()); // 👈 Triggers fresh image loading
+        })
         .catch(console.error);
     }
   }, []);
@@ -31,7 +35,6 @@ export default function UserHeader() {
   useEffect(() => {
     fetchUserData();
 
-    // Listen for custom profile update events dispatched from EditProfileModal
     const handleProfileUpdate = () => {
       fetchUserData();
     };
@@ -49,23 +52,27 @@ export default function UserHeader() {
 
   if (!user) return null;
 
+  // Build image URL with a cache-busting query param
+  const avatarUrl = user.avatar?.asset?._ref || user.avatar?.asset?._id
+    ? `${urlFor(user.avatar).width(100).height(100).url()}&t=${updatedAt}`
+    : null;
+
   return (
     <div className="flex items-center justify-between bg-white p-4 rounded-xl border mb-6 shadow-sm border-purple-100">
-      {/* Clicking anywhere in this section now takes you to your profile */}
       <Link
         href={`/profile/${user.username}`}
         className="flex items-center gap-3 hover:opacity-80 transition group"
       >
         {/* Avatar */}
-        {user.avatar ? (
+        {avatarUrl ? (
           <img
-            src={urlFor(user.avatar).width(100).height(100).url()}
+            src={avatarUrl}
             className="w-12 h-12 rounded-full object-cover border-2 border-purple-500 shadow-sm"
             alt={user.displayName || user.username}
           />
         ) : (
           <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-black text-xl shadow-inner">
-            {(user.displayName || user.username)[0].toUpperCase()}
+            {(user.displayName || user.username)[0]?.toUpperCase()}
           </div>
         )}
 

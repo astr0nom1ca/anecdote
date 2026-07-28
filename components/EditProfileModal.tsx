@@ -42,6 +42,15 @@ const handleSave = async () => {
         body: formData,
       });
 
+      if (!res.ok) throw new Error('Failed to update profile');
+
+      // Give Sanity's asset graph 300ms to resolve the new image asset reference
+      setTimeout(() => {
+        window.dispatchEvent(new Event('locker_profile_updated'));
+      }, 300);
+
+      onOpenChange(false);
+
       const data = await res.json();
 
       if (!res.ok) {
