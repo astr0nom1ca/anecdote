@@ -46,8 +46,11 @@ export default function UserHeader() {
   }, [fetchUserData]);
 
   const handleLogout = () => {
+    // 1. Clear local storage user key
     localStorage.removeItem('locker_user_id');
-    window.location.reload();
+
+    // 2. Redirect to home page (or login) instead of just reloading the current page
+    window.location.href = '/'; 
   };
 
   if (!user) return null;
