@@ -11,8 +11,20 @@ export default function CreateUpdate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  
+  // 🔴 ADDED THESE TWO MISSING HOOKS TO FIX THE RED SQUIGGLES 🔴
+  const [isMoodOpen, setIsMoodOpen] = useState(false);
+  const [moodSearch, setMoodSearch] = useState('');
+
   const router = useRouter();
 
+  // To filter moods in real-time based on label search
+  const filteredMoods = moods.filter((mood) =>
+    mood.label.toLowerCase().includes(moodSearch.toLowerCase())
+  );
+  
+  // To find selected object for button display
+  const selectedMoodObj = moods.find((m) => m._id === selectedMood);
 
   useEffect(() => {
     client.fetch(`*[_type == "mood"]{_id, label, emoji}`).then(setMoods);
@@ -68,6 +80,8 @@ export default function CreateUpdate() {
       setSelectedFile(null);
       setPreview(null);
       setSelectedMood('');
+      setMoodSearch('');
+      setIsMoodOpen(false);
       
       window.location.reload(); 
     } catch (err: any) {
@@ -114,21 +128,90 @@ export default function CreateUpdate() {
           </label>
         </div>
 
-        <div className="flex flex-wrap gap-2 my-4">
-          {moods.map((mood) => (
-            <button
-              key={mood._id}
-              type="button"
-              onClick={() => setSelectedMood(mood._id)}
-              className={`px-3 py-1 rounded-full border text-sm transition ${
-                selectedMood === mood._id 
-                ? 'bg-purple-600 text-white border-purple-600' 
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
+        <div className="relative my-4 w-full">
+          {/* 1. Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsMoodOpen(!isMoodOpen)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-100 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              {selectedMoodObj ? (
+                <>
+                  <span>{selectedMoodObj.emoji}</span>
+                  <span className="text-gray-900 font-bold">{selectedMoodObj.label}</span>
+                </>
+              ) : (
+                <span className="text-gray-400">Select a mood...</span>
+              )}
+            </span>
+            
+            {/* Chevron Icon */}
+            <svg
+              className={`w-4 h-4 text-gray-500 transition-transform ${isMoodOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {mood.emoji} {mood.label}
-            </button>
-          ))}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* 2. Dropdown Menu */}
+          {isMoodOpen && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+              {/* Search Bar Input */}
+              <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                <input
+                  type="text"
+                  placeholder="Search moods..."
+                  value={moodSearch}
+                  onChange={(e) => setMoodSearch(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 text-black placeholder:text-gray-400"
+                  autoFocus
+                />
+              </div>
+
+              {/* Scrollable Mood List */}
+              <div className="max-h-56 overflow-y-auto p-1 divide-y divide-gray-50">
+                {filteredMoods.length > 0 ? (
+                  filteredMoods.map((mood) => {
+                    const isSelected = selectedMood === mood._id;
+                    return (
+                      <button
+                        key={mood._id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMood(mood._id);
+                          setIsMoodOpen(false); // Close dropdown on pick
+                          setMoodSearch('');    // Reset search
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                          isSelected
+                            ? 'bg-purple-50 text-purple-700 font-bold'
+                            : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-base">{mood.emoji}</span>
+                          <span>{mood.label}</span>
+                        </span>
+
+                        {/* Selected Checkmark */}
+                        {isSelected && (
+                          <span className="text-purple-600 font-bold text-xs">✓</span>
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="p-3 text-center text-xs text-gray-400">
+                    No moods matching "{moodSearch}"
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <button
