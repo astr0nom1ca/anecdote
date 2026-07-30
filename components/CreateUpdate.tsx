@@ -142,7 +142,7 @@ export default function CreateUpdate() {
                   <span className="text-gray-900 font-bold">{selectedMoodObj.label}</span>
                 </>
               ) : (
-                <span className="text-gray-400">Select a mood...</span>
+                <span className="text-gray-400">What's the vibe?</span>
               )}
             </span>
             
