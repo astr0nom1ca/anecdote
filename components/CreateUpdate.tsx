@@ -11,8 +11,6 @@ export default function CreateUpdate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  
-  // 🔴 ADDED THESE TWO MISSING HOOKS TO FIX THE RED SQUIGGLES 🔴
   const [isMoodOpen, setIsMoodOpen] = useState(false);
   const [moodSearch, setMoodSearch] = useState('');
 

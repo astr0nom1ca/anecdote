@@ -35,12 +35,17 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Notification banner state
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
   const router = useRouter();
   const strength = getPasswordStrength(password);
 
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setNotification(null); // Clear previous messages
 
     const cleanUsername = username.toLowerCase().trim();
     const cleanEmail = email.toLowerCase().trim();
@@ -63,9 +68,13 @@ export default function AuthPage() {
           throw new Error(data.error || "Login failed");
         }
 
-        // Store the user ID and redirect home
+        // Show success notification before routing
+        setNotification({ message: 'Successfully logged in! Redirecting...', type: 'success' });
         localStorage.setItem('locker_user_id', data.userId);
-        router.push('/');
+        
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
 
       } else {
         // --- 2. SIGNUP FLOW ---
@@ -88,12 +97,19 @@ export default function AuthPage() {
           throw new Error(data.error || "Registration failed");
         }
 
-        router.push('/');
+        // Show success notification before routing
+        setNotification({ message: 'Account created successfully! Redirecting...', type: 'success' });
+        
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Something went wrong. Check your connection!");
-    } finally {
+      setNotification({ 
+        message: err.message || "Something went wrong. Check your connection!", 
+        type: 'error' 
+      });
       setLoading(false);
     }
   };
@@ -104,9 +120,20 @@ export default function AuthPage() {
         <h1 className="text-3xl font-black text-purple-600 mb-2 text-center uppercase tracking-tighter italic">
           anecdote
         </h1>
-        <p className="text-gray-500 text-center mb-8 font-medium">
+        <p className="text-gray-500 text-center mb-6 font-medium">
           {isNewUser ? "Finish creating your account" : "Sign in with your username"}
         </p>
+
+        {/* NOTIFICATION POPUP BANNER */}
+        {notification && (
+          <div className={`mb-6 p-3 rounded-xl text-xs font-semibold text-center animate-in fade-in slide-in-from-top-1 duration-200 ${
+            notification.type === 'success' 
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+              : 'bg-red-50 text-red-600 border border-red-200'
+          }`}>
+            {notification.message}
+          </div>
+        )}
         
         <form onSubmit={handleAuth} className="space-y-4">
           
@@ -215,6 +242,7 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsNewUser(false);
                   setPassword('');
+                  setNotification(null);
                 }} 
                 className="font-bold text-purple-500 hover:text-purple-700 transition underline decoration-2 underline-offset-2"
               >
@@ -229,6 +257,7 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsNewUser(true);
                   setPassword('');
+                  setNotification(null);
                 }} 
                 className="font-bold text-purple-500 hover:text-purple-700 transition underline decoration-2 underline-offset-2"
               >
@@ -239,32 +268,32 @@ export default function AuthPage() {
         </div>
 
         {/* PASSWORD STRENGTH METER (Shows only during signup) */}
-    {isNewUser && password.length > 0 && (
-      <div className="space-y-1 mt-1 px-1 transition-all">
-        <div className="flex justify-between items-center text-xs font-semibold">
-          <span className="text-gray-400">Password strength:</span>
-          <span className={
-            strength.score === 1 ? 'text-red-500' :
-            strength.score === 2 ? 'text-orange-500' :
-            strength.score === 3 ? 'text-yellow-600' : 'text-emerald-600'
-          }>
-            {strength.label}
-          </span>
-        </div>
-        
-        {/* 4-Segment Progress Bar */}
-        <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
-          {[1, 2, 3, 4].map((step) => (
-            <div
-              key={step}
-              className={`h-full rounded-full transition-all duration-300 ${
-                step <= strength.score ? strength.color : 'bg-gray-200'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    )}
+        {isNewUser && password.length > 0 && (
+          <div className="space-y-1 mt-4 px-1 transition-all">
+            <div className="flex justify-between items-center text-xs font-semibold">
+              <span className="text-gray-400">Password strength:</span>
+              <span className={
+                strength.score === 1 ? 'text-red-500' :
+                strength.score === 2 ? 'text-orange-500' :
+                strength.score === 3 ? 'text-yellow-600' : 'text-emerald-600'
+              }>
+                {strength.label}
+              </span>
+            </div>
+            
+            {/* 4-Segment Progress Bar */}
+            <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+              {[1, 2, 3, 4].map((step) => (
+                <div
+                  key={step}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    step <= strength.score ? strength.color : 'bg-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
